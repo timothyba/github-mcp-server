@@ -89,17 +89,29 @@ func BenchmarkHasSpecificFilter(b *testing.B) {
 
 // BenchmarkHasRepoFilter benchmarks the hasRepoFilter convenience function
 func BenchmarkHasRepoFilter(b *testing.B) {
-	queries := []string{
-		"is:issue repo:github/github",
-		"simple query without repo filter",
-		"repo:org/name is:pr author:user",
+	benchmarks := []struct {
+		name  string
+		query string
+	}{
+		{
+			name:  "with_repo_filter",
+			query: "is:issue repo:github/github",
+		},
+		{
+			name:  "without_repo_filter",
+			query: "simple query without repo filter",
+		},
+		{
+			name:  "with_repo_filter_at_start",
+			query: "repo:org/name is:pr author:user",
+		},
 	}
 
-	for _, query := range queries {
-		b.Run(query, func(b *testing.B) {
+	for _, bm := range benchmarks {
+		b.Run(bm.name, func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				hasRepoFilter(query)
+				hasRepoFilter(bm.query)
 			}
 		})
 	}
@@ -107,17 +119,29 @@ func BenchmarkHasRepoFilter(b *testing.B) {
 
 // BenchmarkHasTypeFilter benchmarks the hasTypeFilter convenience function
 func BenchmarkHasTypeFilter(b *testing.B) {
-	queries := []string{
-		"type:user some search",
-		"simple query without type filter",
-		"type:org location:seattle",
+	benchmarks := []struct {
+		name  string
+		query string
+	}{
+		{
+			name:  "with_type_user_filter",
+			query: "type:user some search",
+		},
+		{
+			name:  "without_type_filter",
+			query: "simple query without type filter",
+		},
+		{
+			name:  "with_type_org_filter",
+			query: "type:org location:seattle",
+		},
 	}
 
-	for _, query := range queries {
-		b.Run(query, func(b *testing.B) {
+	for _, bm := range benchmarks {
+		b.Run(bm.name, func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				hasTypeFilter(query)
+				hasTypeFilter(bm.query)
 			}
 		})
 	}
