@@ -655,7 +655,7 @@ func handleFailedJobLogs(ctx context.Context, client *github.Client, owner, repo
 	}
 
 	// Collect logs for all failed jobs
-	var logResults []map[string]any
+	logResults := make([]map[string]any, 0, len(failedJobs))
 	for _, job := range failedJobs {
 		jobResult, resp, err := getJobLogData(ctx, client, owner, repo, job.GetID(), job.GetName(), returnContent, tailLines, contentWindowSize)
 		if err != nil {
