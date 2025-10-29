@@ -430,7 +430,7 @@ func GetWorkflowRunLogs(getClient GetClientFn, t translations.TranslationHelperF
 				"message":          "Workflow run logs are available for download",
 				"note":             "The logs_url provides a download link for the complete workflow run logs as a ZIP archive. You can download this archive to extract and examine individual job logs.",
 				"warning":          "This downloads ALL logs as a ZIP file which can be large and expensive. For debugging failed jobs, consider using get_job_logs with failed_only=true and run_id instead.",
-				"optimization_tip": "Use: get_job_logs with parameters {run_id: " + fmt.Sprintf("%d", runID) + ", failed_only: true} for more efficient failed job debugging",
+				"optimization_tip": fmt.Sprintf("Use: get_job_logs with parameters {run_id: %d, failed_only: true} for more efficient failed job debugging", runID),
 			}
 
 			r, err := json.Marshal(result)
@@ -518,7 +518,7 @@ func ListWorkflowJobs(getClient GetClientFn, t translations.TranslationHelperFun
 			// Add optimization tip for failed job debugging
 			response := map[string]any{
 				"jobs":             jobs,
-				"optimization_tip": "For debugging failed jobs, consider using get_job_logs with failed_only=true and run_id=" + fmt.Sprintf("%d", runID) + " to get logs directly without needing to list jobs first",
+				"optimization_tip": fmt.Sprintf("For debugging failed jobs, consider using get_job_logs with failed_only=true and run_id=%d to get logs directly without needing to list jobs first", runID),
 			}
 
 			r, err := json.Marshal(response)

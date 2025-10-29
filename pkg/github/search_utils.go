@@ -7,24 +7,77 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
+	"sync"
 
 	"github.com/google/go-github/v76/github"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+var (
+	// Cache for compiled regex patterns to avoid recompilation
+	regexCache      = make(map[string]*regexp.Regexp)
+	regexCacheMutex sync.RWMutex
+)
+
+// getCompiledRegex returns a cached compiled regex or compiles and caches a new one
+func getCompiledRegex(pattern string) (*regexp.Regexp, error) {
+	regexCacheMutex.RLock()
+	re, exists := regexCache[pattern]
+	regexCacheMutex.RUnlock()
+	
+	if exists {
+		return re, nil
+	}
+	
+	regexCacheMutex.Lock()
+	defer regexCacheMutex.Unlock()
+	
+	// Double-check after acquiring write lock
+	if re, exists := regexCache[pattern]; exists {
+		return re, nil
+	}
+	
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, err
+	}
+	
+	regexCache[pattern] = re
+	return re, nil
+}
+
 func hasFilter(query, filterType string) bool {
+	// Quick check: if the filter prefix doesn't exist at all, return false
+	prefix := filterType + ":"
+	if !strings.Contains(query, prefix) {
+		return false
+	}
+	
 	// Match filter at start of string, after whitespace, or after non-word characters like '('
 	pattern := fmt.Sprintf(`(^|\s|\W)%s:\S+`, regexp.QuoteMeta(filterType))
-	matched, _ := regexp.MatchString(pattern, query)
-	return matched
+	re, err := getCompiledRegex(pattern)
+	if err != nil {
+		return false
+	}
+	return re.MatchString(query)
 }
 
 func hasSpecificFilter(query, filterType, filterValue string) bool {
+	// Quick check: if the filter prefix doesn't exist at all, return false
+	prefix := filterType + ":" + filterValue
+	if !strings.Contains(query, prefix) {
+		return false
+	}
+	
 	// Match specific filter:value at start, after whitespace, or after non-word characters
 	// End with word boundary, whitespace, or non-word characters like ')'
 	pattern := fmt.Sprintf(`(^|\s|\W)%s:%s($|\s|\W)`, regexp.QuoteMeta(filterType), regexp.QuoteMeta(filterValue))
-	matched, _ := regexp.MatchString(pattern, query)
-	return matched
+	re, err := getCompiledRegex(pattern)
+	if err != nil {
+		return false
+	}
+	return re.MatchString(query)
 }
 
 func hasRepoFilter(query string) bool {
