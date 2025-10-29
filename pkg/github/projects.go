@@ -69,7 +69,6 @@ func ListProjects(getClient GetClientFn, t translations.TranslationHelperFunc) (
 
 			var resp *github.Response
 			var projects []*github.ProjectV2
-			minimalProjects := []MinimalProject{}
 
 			opts := &github.ListProjectsOptions{
 				ListProjectsPaginationOptions: github.ListProjectsPaginationOptions{PerPage: perPage},
@@ -91,6 +90,8 @@ func ListProjects(getClient GetClientFn, t translations.TranslationHelperFunc) (
 			}
 			defer func() { _ = resp.Body.Close() }()
 
+			// Pre-allocate slice with known capacity
+			minimalProjects := make([]MinimalProject, 0, len(projects))
 			for _, project := range projects {
 				minimalProjects = append(minimalProjects, *convertToMinimalProject(project))
 			}
